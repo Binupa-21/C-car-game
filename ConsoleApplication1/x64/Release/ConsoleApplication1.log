@@ -1,8 +1,7 @@
-﻿  ConsoleApplication1.cpp
-  game.cpp
+﻿  game.cpp
   Generating code
-  137 of 144 functions (95.1%) were compiled, the rest were copied from previous compilation.
-    120 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+  13 of 308 functions ( 4.2%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    3 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   ConsoleApplication1.vcxproj -> C:\Users\User\OneDrive\Desktop\uni\OOP\ConsoleApplication1\x64\Release\ConsoleApplication1.exe

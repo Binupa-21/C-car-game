@@ -131,16 +131,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AssertManager.cpp" />
     <ClCompile Include="ConsoleApplication1.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="rock.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AssetManager.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="obstacle.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="rock.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="2.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

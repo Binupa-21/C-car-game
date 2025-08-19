@@ -1,5 +1,6 @@
 #include "game.h"
 #include "Rock.h"
+#include "AssetManager.h"
 #include <cstdlib> // For rand()
 #include <ctime>   // For time()
 #include <iostream> // For std::cout
@@ -9,6 +10,11 @@
 Game::Game() : window(sf::VideoMode(800, 900), "SFML Car Game") {
     window.setFramerateLimit(60);
     srand(static_cast<unsigned>(time(0)));
+    // Load road textures with correct path and syntax
+    m_roadSprite1.setTexture(AssetManager::GetTexture("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Road.png"));
+    m_roadSprite2.setTexture(AssetManager::GetTexture("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Road.png"));
+    m_roadSprite1.setPosition(0, 0);
+    m_roadSprite2.setPosition(0, -900.f); // Position second sprite above the first
 }
 
 void Game::run() {
@@ -40,6 +46,19 @@ void Game::handleInput() {
 void Game::update() {
     if (isGameOver) return; // Don't update if game is over
 
+    // --- Scroll the road ---
+    float m_roadSpeed = 300.f; // Example speed, adjust as needed
+    float deltaTime = 1.f / 60.f; // Fixed timestep for now
+    m_roadSprite1.move(0, m_roadSpeed * deltaTime);
+    m_roadSprite2.move(0, m_roadSpeed * deltaTime);
+
+    if (m_roadSprite1.getPosition().y > 900.f) { // If it's off-screen
+        m_roadSprite1.setPosition(0, -900.f);
+    }
+    if (m_roadSprite2.getPosition().y > 900.f) {
+        m_roadSprite2.setPosition(0, -900.f);
+    }
+
     spawnObstacle();
 
     // POLYMORPHISM: We call update() on each obstacle, regardless of its specific type (Rock, etc.)
@@ -55,7 +74,9 @@ void Game::update() {
 
 void Game::render() {
     window.clear(sf::Color(50, 50, 50));
-    player.draw(window); // Draw the player
+    window.draw(m_roadSprite1);
+    window.draw(m_roadSprite2);
+    player.draw(window); // Draw the player on top of the road
     // Draw all obstacles
     for (auto& obstacle : obstacles) {
         obstacle->draw(window);

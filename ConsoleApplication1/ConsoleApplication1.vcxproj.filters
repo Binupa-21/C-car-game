@@ -27,6 +27,9 @@
     <ClCompile Include="rock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AssertManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h">
@@ -41,5 +44,13 @@
     <ClInclude Include="rock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AssetManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
