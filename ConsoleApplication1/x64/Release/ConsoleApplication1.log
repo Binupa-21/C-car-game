@@ -1,3 +1,8 @@
-﻿ConsoleApplication1.obj : error LNK2001: unresolved external symbol "public: void __cdecl Game::run(void)" (?run@Game@@QEAAXXZ)
-ConsoleApplication1.obj : error LNK2001: unresolved external symbol "public: __cdecl Game::Game(void)" (??0Game@@QEAA@XZ)
-C:\Users\User\OneDrive\Desktop\uni\OOP\ConsoleApplication1\x64\Release\ConsoleApplication1.exe : fatal error LNK1120: 2 unresolved externals
+﻿  ConsoleApplication1.cpp
+  game.cpp
+  Generating code
+  137 of 144 functions (95.1%) were compiled, the rest were copied from previous compilation.
+    120 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  ConsoleApplication1.vcxproj -> C:\Users\User\OneDrive\Desktop\uni\OOP\ConsoleApplication1\x64\Release\ConsoleApplication1.exe
