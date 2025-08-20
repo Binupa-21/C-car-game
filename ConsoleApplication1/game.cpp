@@ -41,6 +41,8 @@ void Game::handleInput() {
             }
         }
     }
+    // Always update player rotation based on key state
+    player.handleInput();
 }
 
 void Game::update() {
@@ -61,13 +63,44 @@ void Game::update() {
 
     spawnObstacle();
 
+    player.update(); // Smoothly update car position
+
     // POLYMORPHISM: We call update() on each obstacle, regardless of its specific type (Rock, etc.)
     for (auto& obstacle : obstacles) {
         obstacle->update();
+        // Shrink collision bounds for more forgiving collision
+        sf::FloatRect playerBounds = player.getBounds();
+        sf::FloatRect obstacleBounds = obstacle->getBounds();
+        float margin = 20.f; // Reduce collision area by 20 pixels on each side
+        playerBounds.left += margin;
+        playerBounds.top += margin;
+        playerBounds.width -= 2 * margin;
+        playerBounds.height -= 2 * margin;
+        obstacleBounds.left += margin;
+        obstacleBounds.top += margin;
+        obstacleBounds.width -= 2 * margin;
+        obstacleBounds.height -= 2 * margin;
         // Check for collision
-        if (obstacle->getBounds().intersects(player.getBounds())) {
+        if (playerBounds.intersects(obstacleBounds)) {
             isGameOver = true;
             std::cout << "GAME OVER!" << std::endl;
+            // Start shake effect
+            isShaking = true;
+            shakeClock.restart();
+        }
+    }
+    // Camera shake effect
+    if (isShaking) {
+        // Shake for 0.2 seconds
+        if (shakeClock.getElapsedTime().asSeconds() < 0.2f) {
+            sf::View view = window.getView();
+            float offsetX = (rand() % 10) - 5;
+            float offsetY = (rand() % 10) - 5;
+            view.move(offsetX, offsetY);
+            window.setView(view);
+        } else {
+            isShaking = false;
+            window.setView(window.getDefaultView());
         }
     }
 }
@@ -76,11 +109,12 @@ void Game::render() {
     window.clear(sf::Color(50, 50, 50));
     window.draw(m_roadSprite1);
     window.draw(m_roadSprite2);
-    player.draw(window); // Draw the player on top of the road
-    // Draw all obstacles
+    // Draw all obstacles first
     for (auto& obstacle : obstacles) {
         obstacle->draw(window);
     }
+    // Draw the player on top of the obstacles
+    player.draw(window);
     window.display();
 }
 

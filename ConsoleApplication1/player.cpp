@@ -17,6 +17,8 @@ Player::Player() {
 
     // Set initial position: middle lane, near bottom of window
     m_sprite.setPosition(375.f, 800.f); // Adjust Y as needed for your window size
+
+    targetX = m_sprite.getPosition().x; // Initialize targetX
 }
 
 // This move logic is simple: it just jumps between lanes.
@@ -26,9 +28,25 @@ void Player::move(int direction) {
     if (lane < 0) lane = 0;
     if (lane > 2) lane = 2;
 
-    // X-positions for lanes: Left=225, Middle=375, Right=525
-    float newX = 225.f + (lane * 150.f);
-    m_sprite.setPosition(newX, m_sprite.getPosition().y);
+    // Set targetX for smooth movement
+    targetX = 225.f + (lane * 150.f);
+}
+
+void Player::update() {
+    // Smoothly move towards targetX
+    float currentX = m_sprite.getPosition().x;
+    float speed = 12.0f; // Lower value = slower lane change
+    if (std::abs(currentX - targetX) > 1.0f) {
+        float direction = (targetX > currentX) ? 1.f : -1.f;
+        float newX = currentX + direction * speed;
+        // Clamp if overshooting
+        if ((direction > 0 && newX > targetX) || (direction < 0 && newX < targetX)) {
+            newX = targetX;
+        }
+        m_sprite.setPosition(newX, m_sprite.getPosition().y);
+    } else {
+        m_sprite.setPosition(targetX, m_sprite.getPosition().y);
+    }
 }
 
 void Player::draw(sf::RenderWindow& window) const {
@@ -38,3 +56,14 @@ void Player::draw(sf::RenderWindow& window) const {
 sf::FloatRect Player::getBounds() const {
     return m_sprite.getGlobalBounds();
 }
+
+void Player::handleInput() {
+    // Check left/right keys and set rotation
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+        m_sprite.setRotation(-10.f);
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+        m_sprite.setRotation(10.f);
+    } else {
+        m_sprite.setRotation(0.f);
+    }
+}                   
