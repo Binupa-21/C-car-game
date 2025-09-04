@@ -7,6 +7,7 @@ protected:
     sf::RectangleShape shape;
     sf::Sprite sprite; // Add sprite for obstacle image
     float speed = 3.0f;
+    int lane = 1; // Lane index for obstacle
 
 public:
     // Virtual destructor is important for base classes!
@@ -23,4 +24,5 @@ public:
         else
             return shape.getGlobalBounds();
     }
+    int getLane() const { return lane; }
 };
