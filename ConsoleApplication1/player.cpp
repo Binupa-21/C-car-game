@@ -16,19 +16,16 @@ Player::Player() {
     m_sprite.setOrigin(bounds.width / 2.f, bounds.height / 2.f);
 
     // Set initial position: middle lane, near bottom of window
-    m_sprite.setPosition(375.f, 800.f); // Adjust Y as needed for your window size
-
+    m_sprite.setPosition(375.f, 800.f); // Center lane
     targetX = m_sprite.getPosition().x; // Initialize targetX
 }
 
 // This move logic is simple: it just jumps between lanes.
 void Player::move(int direction) {
     lane += direction;
-    // Constrain the lane index between 0 and 2
     if (lane < 0) lane = 0;
     if (lane > 2) lane = 2;
-
-    // Set targetX for smooth movement
+    // Less wide lanes: Left=225, Middle=375, Right=525
     targetX = 225.f + (lane * 150.f);
 }
 
@@ -66,4 +63,4 @@ void Player::handleInput() {
     } else {
         m_sprite.setRotation(0.f);
     }
-}                   
+}
