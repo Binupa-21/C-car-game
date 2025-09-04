@@ -1,2 +1,4 @@
-﻿  player.cpp
-  ConsoleApplication1.vcxproj -> C:\Users\User\OneDrive\Desktop\uni\OOP\ConsoleApplication1\x64\Debug\ConsoleApplication1.exe
+﻿  game.cpp
+C:\Users\User\Desktop\oop\C-car-game-main\ConsoleApplication1\game.cpp(116,27): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\User\Desktop\oop\C-car-game-main\ConsoleApplication1\game.cpp(117,27): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+  ConsoleApplication1.vcxproj -> C:\Users\User\Desktop\oop\C-car-game-main\x64\Debug\ConsoleApplication1.exe

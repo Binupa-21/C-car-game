@@ -23,7 +23,16 @@ private:
     void update();
     void render();
     void spawnObstacle();
+
+    sf::Font font;
+    sf::Text scoreText;
+    sf::Text gameOverText;
+    int score = 0;
+
+    void reset();
+
 public:
     Game();
     void run();
 };
+

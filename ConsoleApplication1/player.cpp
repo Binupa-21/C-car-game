@@ -4,7 +4,7 @@
 
 Player::Player() {
     // Get the texture from the manager
-    m_sprite.setTexture(AssetManager::GetTexture("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/x64/Release/car.png"));
+    m_sprite.setTexture(AssetManager::GetTexture("C:\\Users\\User\\Desktop\\oop\\C-car-game-main\\car.png"));
 
     // Scale the sprite to fit the game window (e.g., 60x60 pixels)
     float targetWidth = 90.f;

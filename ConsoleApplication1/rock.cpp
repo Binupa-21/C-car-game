@@ -7,7 +7,7 @@ Rock::Rock(int lane) {
     shape.setPosition(220.f + (lane * 150.f), -100.f);
     speed = 4.0f;
     // Set up sprite
-    sprite.setTexture(AssetManager::GetTexture("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/rock.png"));
+    sprite.setTexture(AssetManager::GetTexture("C:\\Users\\User\\Desktop\\oop\\C-car-game-main\\Rock.png"));
     sprite.setPosition(shape.getPosition());
     sprite.setScale(120.f / sprite.getLocalBounds().width, 120.f / sprite.getLocalBounds().height); // Increased scale
 }

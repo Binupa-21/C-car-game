@@ -11,10 +11,24 @@ Game::Game() : window(sf::VideoMode(800, 900), "SFML Car Game") {
     window.setFramerateLimit(60);
     srand(static_cast<unsigned>(time(0)));
     // Load road textures with correct path and syntax
-    m_roadSprite1.setTexture(AssetManager::GetTexture("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Road.png"));
-    m_roadSprite2.setTexture(AssetManager::GetTexture("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Road.png"));
+    m_roadSprite1.setTexture(AssetManager::GetTexture("C:\\Users\\User\\Desktop\\oop\\C-car-game-main\\Road.png"));
+    m_roadSprite2.setTexture(AssetManager::GetTexture("C:\\Users\\User\\Desktop\\oop\\C-car-game-main\\Road.png"));
     m_roadSprite1.setPosition(0, 0);
     m_roadSprite2.setPosition(0, -900.f); // Position second sprite above the first
+
+    if (!font.loadFromFile("arial.ttf")) {
+        // Handle error 
+    }
+    scoreText.setFont(font);
+    scoreText.setCharacterSize(24);
+    scoreText.setFillColor(sf::Color::White);
+    scoreText.setPosition(10, 10);
+
+    gameOverText.setFont(font);
+    gameOverText.setCharacterSize(50);
+    gameOverText.setFillColor(sf::Color::White);
+    gameOverText.setString("GAME OVER");
+    gameOverText.setPosition(250, 400);
 }
 
 void Game::run() {
@@ -43,6 +57,11 @@ void Game::handleInput() {
     }
     // Always update player rotation based on key state
     player.handleInput();
+
+    if (isGameOver && event.type == sf::Event::KeyPressed && event.key.code
+        == sf::Keyboard::R) {
+        reset();
+    }
 }
 
 void Game::update() {
@@ -103,6 +122,9 @@ void Game::update() {
             window.setView(window.getDefaultView());
         }
     }
+
+    score++;
+    scoreText.setString("Score: " + std::to_string(score));
 }
 
 void Game::render() {
@@ -115,7 +137,12 @@ void Game::render() {
     }
     // Draw the player on top of the obstacles
     player.draw(window);
+    window.draw(scoreText);
+    if (isGameOver) {
+        window.draw(gameOverText);
+    }
     window.display();
+
 }
 
 void Game::spawnObstacle() {
@@ -125,4 +152,11 @@ void Game::spawnObstacle() {
         obstacles.push_back(std::make_unique<Rock>(randomLane));
         spawnClock.restart();
     }
+}
+
+void Game::reset() {
+    isGameOver = false;
+    score = 0;
+    obstacles.clear(); // Remove all old obstacles 
+    player = Player(); // Reset player to original state 
 }
