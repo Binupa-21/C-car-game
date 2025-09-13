@@ -14,8 +14,9 @@ public:
     virtual ~Obstacle() = default;
 
     // Pure virtual functions make this class abstract
-    virtual void update() = 0;
+    virtual void update() = 0; // Only no-arg update
     virtual void draw(sf::RenderWindow& window) = 0;
+    virtual void setSpeed(float s) { speed = s; } // Allow dynamic speed
 
     sf::FloatRect getBounds() const {
         // Use sprite bounds for collision if texture is set, else fallback to shape
@@ -25,4 +26,5 @@ public:
             return shape.getGlobalBounds();
     }
     int getLane() const { return lane; }
+    float getTop() const { return sprite.getPosition().y; }
 };

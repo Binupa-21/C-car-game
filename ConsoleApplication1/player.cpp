@@ -4,7 +4,7 @@
 
 Player::Player() {
     // Get the texture from the manager
-    m_sprite.setTexture(AssetManager::GetTexture("C:/Users/User/Desktop/oop_new/oop new/ConsoleApplication1/2.png"));
+    m_sprite.setTexture(AssetManager::GetTexture("Assets/Car.png"));
 
     // Scale the sprite to fit the game window (e.g., 60x60 pixels)
     float targetWidth = 90.f;
@@ -18,6 +18,13 @@ Player::Player() {
     // Set initial position: middle lane, near bottom of window
     m_sprite.setPosition(375.f, 800.f); // Center lane
     targetX = m_sprite.getPosition().x; // Initialize targetX
+    lane = 1;
+}
+
+void Player::reset() {
+    lane = 1;
+    targetX = 375.f;
+    m_sprite.setPosition(375.f, 800.f);
 }
 
 // This move logic is simple: it just jumps between lanes.

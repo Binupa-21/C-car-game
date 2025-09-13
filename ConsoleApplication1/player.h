@@ -16,4 +16,5 @@ public:
     void draw(sf::RenderWindow& window) const;
     sf::FloatRect getBounds() const;
     void handleInput();
+    void reset(); // Add reset method
 };

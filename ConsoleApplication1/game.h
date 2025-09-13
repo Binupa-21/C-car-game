@@ -1,44 +1,82 @@
+#undef Game
 #pragma once
-
-#include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
-
-#include <memory>
+#include <SFML/Audio.hpp>
+#include "Player.h"
+#include "Obstacle.h"
 #include <vector>
+#include <memory>
 
-#include "obstacle.h"
-#include "player.h"
+// Define the different states our application can be in.
+enum class GameState { MAIN_MENU, INSTRUCTIONS, PLAYING, GAME_OVER };
 
 class Game {
-private:
-	sf::RenderWindow window;
-	Player player;
-	std::vector<std::unique_ptr<Obstacle>> obstacles;
-	bool isGameOver = false;
-	sf::Clock spawnClock;
-	sf::Sprite m_roadSprite1;
-	sf::Sprite m_roadSprite2;
-	float m_roadSpeed = 200.0f;  // Pixels per second
-	// Camera shake variables
-	sf::Clock shakeClock;
-	bool isShaking = false;
-
-	void handleInput();
-	void update();
-	void render();
-	void spawnObstacle();
-	sf::Sound m_crashSound;  // <--  The object that plays the sound
-	sf::Music m_backgroundMusic;  // <--  The object for background music
-
-	sf::Font font;
-	sf::Text scoreText;
-	sf::Text gameOverText;
-	int score = 0;
-
-
-
 public:
 	Game();
 	void run();
+
+private:
+	// --- Helper Function ---
+	void centerText(sf::Text& text, float x, float y);
+
+	// --- State Machine Router Functions ---
+	void processEvents();
+	void update(sf::Time deltaTime);
+	void render();
+
+	// --- State-Specific Functions ---
+	void processMenuEvents(sf::Event& event);
+	void processInstructionsEvents(sf::Event& event);
+	void processGameOverEvents(sf::Event& event);
+
+	void updateMainMenu();
+	void updateGame(sf::Time deltaTime);
+	void updateGameOverMenu();
+
+	void renderMainMenu();
+	void renderInstructions();
+	void renderGame();
+	void renderGameOver();
+
+	// --- Game Utility Functions ---
 	void reset();
+	void spawnObstacle();
+	void updateRoad(sf::Time deltaTime);
+	void saveHighScore();
+	void loadHighScore();
+
+private:
+	sf::RenderWindow m_window;
+	GameState m_currentState = GameState::MAIN_MENU; // Start in the menu!
+	Player m_player;
+	std::vector<std::unique_ptr<Obstacle>> m_obstacles;
+	sf::Font m_font;
+	sf::Clock m_spawnClock;
+	int m_score = 0;
+	int m_highScore = 0;
+
+	// --- Main Menu Assets ---
+	sf::Sprite m_menuBackgroundSprite;
+	sf::Text m_menuTitle;
+	sf::Text m_menuPlay;
+	sf::Text m_menuInstructions;
+	sf::Text m_menuExit;
+	int m_selectedMenuItem = 0;
+
+	// --- Instructions Assets ---
+	sf::Text m_instructionsText;
+
+	// --- Game Assets ---
+	sf::Text m_scoreText;
+	sf::Sprite m_roadSprite1, m_roadSprite2;
+	sf::Sound m_crashSound;
+	sf::Music m_backgroundMusic;
+
+	// --- Game Over Assets ---
+	sf::Text m_gameOverTitle;
+	sf::Text m_highScoreText;
+	sf::Text m_gameOverRestart;
+	sf::Text m_gameOverMainMenu;
+	sf::Text m_gameOverExit;
+	int m_selectedGameOverItem = 0;
 };

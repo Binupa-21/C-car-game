@@ -1,95 +1,207 @@
+#undef Game
 #include "game.h"
 #include "Rock.h"
 #include "AssetManager.h"
-#include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include <memory>
-#include <vector>
-#include <string>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
 
-Game::Game() : window(sf::VideoMode(800, 900), "SFML Car Game")
-{
-    window.setFramerateLimit(60);
-    srand(static_cast<unsigned>(time(0)));
-    m_roadSprite1.setTexture(AssetManager::GetTexture("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Road.png"));
-    m_roadSprite2.setTexture(AssetManager::GetTexture("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Road.png"));
-    m_roadSprite1.setPosition(0, 0);
-    m_roadSprite2.setPosition(0, -900.f);
-    m_crashSound.setBuffer(AssetManager::GetSoundBuffer("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Audio/crash.wav"));
-    if (m_backgroundMusic.openFromFile("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Audio/bgmusic.ogg")) {
-        m_backgroundMusic.setVolume(40.f);
-        m_backgroundMusic.setLoop(true);
-        m_backgroundMusic.play();
-    }
-    // Font and text initialization
-    if (!font.loadFromFile("arial.ttf")) {
-        std::cerr << "Failed to load arial.ttf" << std::endl;
-    }
-    scoreText.setFont(font);
-    scoreText.setCharacterSize(24);
-    scoreText.setFillColor(sf::Color::White);
-    scoreText.setPosition(10, 10);
+Game::Game() : m_window(sf::VideoMode(800, 900), "SFML Car Game") {
+	m_window.setFramerateLimit(60);
+	srand(static_cast<unsigned int>(time(0)));
+	loadHighScore();
 
-    gameOverText.setFont(font);
-    gameOverText.setCharacterSize(70);
-    gameOverText.setFillColor(sf::Color::Red);
-    gameOverText.setString("GAME OVER");
-    gameOverText.setPosition(200, 400);
+	// Load font (must be done before configuring text)
+	if (!m_font.loadFromFile("Assets/arial.ttf")) { std::cerr << "Failed to load font!\n"; }
+
+	// --- Configure Shared and Game-Specific Text ---
+	m_scoreText.setFont(m_font); m_scoreText.setCharacterSize(24); m_scoreText.setFillColor(sf::Color::White); m_scoreText.setPosition(10.f, 10.f);
+	m_highScoreText.setFont(m_font); m_highScoreText.setCharacterSize(30); m_highScoreText.setFillColor(sf::Color::White);
+
+	// --- Configure Main Menu ---
+	m_menuBackgroundSprite.setTexture(AssetManager::GetTexture("Assets/Mainmenu.png"));
+	m_menuTitle.setFont(m_font); m_menuTitle.setString("NITRO RUSH"); m_menuTitle.setCharacterSize(80); m_menuTitle.setFillColor(sf::Color::White); m_menuTitle.setStyle(sf::Text::Bold);
+	centerText(m_menuTitle, 400, 150);
+	m_menuPlay.setFont(m_font); m_menuPlay.setString("Play"); m_menuPlay.setCharacterSize(40); centerText(m_menuPlay, 400, 350);
+	m_menuPlay.setOutlineColor(sf::Color::Black); m_menuPlay.setOutlineThickness(2.f);
+	m_menuInstructions.setFont(m_font); m_menuInstructions.setString("Instructions"); m_menuInstructions.setCharacterSize(40); centerText(m_menuInstructions, 400, 450);
+	m_menuInstructions.setOutlineColor(sf::Color::Black); m_menuInstructions.setOutlineThickness(2.f);
+	m_menuExit.setFont(m_font); m_menuExit.setString("Exit"); m_menuExit.setCharacterSize(40); centerText(m_menuExit, 400, 550);
+	m_menuExit.setOutlineColor(sf::Color::Black); m_menuExit.setOutlineThickness(2.f);
+
+	// --- Configure Instructions Screen ---
+	m_instructionsText.setFont(m_font);
+	std::stringstream ss;
+	ss << "INSTRUCTIONS\n\n\n"
+		<< "Use the LEFT and RIGHT arrow keys to change lanes.\n\n"
+		<< "Dodge the falling rocks for as long as you can!\n\n\n\n"
+		<< "Press any key to return to the menu.";
+	m_instructionsText.setString(ss.str()); m_instructionsText.setCharacterSize(30); m_instructionsText.setFillColor(sf::Color::White); centerText(m_instructionsText, 400, 450);
+
+	// --- Configure Game Over Menu ---
+	m_gameOverTitle.setFont(m_font); m_gameOverTitle.setString("GAME OVER"); m_gameOverTitle.setCharacterSize(80); m_gameOverTitle.setFillColor(sf::Color::Red); centerText(m_gameOverTitle, 400, 200);
+	m_gameOverRestart.setFont(m_font); m_gameOverRestart.setString("Restart"); m_gameOverRestart.setCharacterSize(40); centerText(m_gameOverRestart, 400, 400);
+	m_gameOverMainMenu.setFont(m_font); m_gameOverMainMenu.setString("Main Menu"); m_gameOverMainMenu.setCharacterSize(40); centerText(m_gameOverMainMenu, 400, 500);
+	m_gameOverExit.setFont(m_font); m_gameOverExit.setString("Exit"); m_gameOverExit.setCharacterSize(40); centerText(m_gameOverExit, 400, 600);
+
+	// --- Configure Game Assets ---
+	m_roadSprite1.setTexture(AssetManager::GetTexture("Assets/road.png"));
+	m_roadSprite2.setTexture(AssetManager::GetTexture("Assets/road.png"));
+	m_roadSprite1.setPosition(0, 0); m_roadSprite2.setPosition(0, -900.f);
+
+	m_crashSound.setBuffer(AssetManager::GetSoundBuffer("Assets/crash.wav"));
+	if (m_backgroundMusic.openFromFile("Assets/bgmusic.ogg")) { // FIX: use correct music file
+		m_backgroundMusic.setVolume(40.f); m_backgroundMusic.setLoop(true);
+	}
 }
 
 void Game::run() {
-	while (window.isOpen()) {
-		handleInput();
-		update();
+	sf::Clock clock;
+	while (m_window.isOpen()) {
+		sf::Time deltaTime = clock.restart();
+		processEvents();
+		update(deltaTime);
 		render();
 	}
 }
 
-void Game::handleInput() {
-	sf::Event event;
-	while (window.pollEvent(event)) {
-		if (event.type == sf::Event::Closed) {
-			window.close();
-		}
-		if (event.type == sf::Event::KeyPressed) {
-			if (event.key.code == sf::Keyboard::Left) {
-				player.move(-1);
-			}
-			else if (event.key.code == sf::Keyboard::Right) {
-				player.move(1);
-			}
-		}
-	}
-	player.handleInput();
+// A helper function to make text centering easier
+void Game::centerText(sf::Text& text, float x, float y) {
+	sf::FloatRect bounds = text.getLocalBounds();
+	text.setOrigin(bounds.left + bounds.width / 2.0f, bounds.top + bounds.height / 2.0f);
+	text.setPosition(x, y);
+}
 
-	if (isGameOver && event.type == sf::Event::KeyPressed && event.key.code
-		== sf::Keyboard::R) {
-		reset();
+// --- STATE MACHINE ROUTERS ---
+void Game::processEvents() {
+	sf::Event event;
+	while (m_window.pollEvent(event)) {
+		if (event.type == sf::Event::Closed) { m_window.close(); }
+		switch (m_currentState) {
+		case GameState::MAIN_MENU:    processMenuEvents(event); break;
+		case GameState::INSTRUCTIONS: processInstructionsEvents(event); break;
+		case GameState::GAME_OVER:    processGameOverEvents(event); break;
+		case GameState::PLAYING:      break; // Real-time input is handled in updateGame
+		}
 	}
 }
 
-void Game::update() {
-	if (isGameOver) return;
-	float m_roadSpeed = 250.f;
-	float deltaTime = 1.f / 60.f;
-	m_roadSprite1.move(0, m_roadSpeed * deltaTime);
-	m_roadSprite2.move(0, m_roadSpeed * deltaTime);
-	if (m_roadSprite1.getPosition().y > 900.f) {
-		m_roadSprite1.setPosition(0, -900.f);
+void Game::update(sf::Time deltaTime) {
+	switch (m_currentState) {
+	case GameState::MAIN_MENU:    updateMainMenu(); break;
+	case GameState::PLAYING:      updateGame(deltaTime); break;
+	case GameState::GAME_OVER:    updateGameOverMenu(); break;
+	case GameState::INSTRUCTIONS: break; // No update logic needed
 	}
-	if (m_roadSprite2.getPosition().y > 900.f) {
-		m_roadSprite2.setPosition(0, -900.f);
+}
+
+void Game::render() {
+	m_window.clear();
+	switch (m_currentState) {
+	case GameState::MAIN_MENU:    renderMainMenu(); break;
+	case GameState::INSTRUCTIONS: renderInstructions(); break;
+	case GameState::PLAYING:      renderGame(); break;
+	case GameState::GAME_OVER:    renderGameOver(); break;
 	}
-	spawnObstacle();
-	player.update();
-	for (auto& obstacle : obstacles) {
+	m_window.display();
+}
+
+// --- EVENT PROCESSING FOR MENUS ---
+void Game::processMenuEvents(sf::Event& event) {
+	if (event.type == sf::Event::KeyPressed) {
+		if (event.key.code == sf::Keyboard::Up) { m_selectedMenuItem = (m_selectedMenuItem + 2) % 3; }
+		if (event.key.code == sf::Keyboard::Down) { m_selectedMenuItem = (m_selectedMenuItem + 1) % 3; }
+		if (event.key.code == sf::Keyboard::Return) {
+			if (m_selectedMenuItem == 0) { reset(); m_currentState = GameState::PLAYING; }
+			if (m_selectedMenuItem == 1) { m_currentState = GameState::INSTRUCTIONS; }
+			if (m_selectedMenuItem == 2) { m_window.close(); }
+		}
+	}
+	// --- Mouse click support for menu ---
+	if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+		auto mousePos = m_window.mapPixelToCoords({ event.mouseButton.x, event.mouseButton.y });
+		if (m_menuPlay.getGlobalBounds().contains(mousePos)) { reset(); m_currentState = GameState::PLAYING; }
+		if (m_menuInstructions.getGlobalBounds().contains(mousePos)) { m_currentState = GameState::INSTRUCTIONS; }
+		if (m_menuExit.getGlobalBounds().contains(mousePos)) { m_window.close(); }
+	}
+}
+void Game::processInstructionsEvents(sf::Event& event) {
+	if (event.type == sf::Event::KeyPressed) { m_currentState = GameState::MAIN_MENU; }
+}
+void Game::processGameOverEvents(sf::Event& event) {
+	if (event.type == sf::Event::KeyPressed) {
+		if (event.key.code == sf::Keyboard::Up) { m_selectedGameOverItem = (m_selectedGameOverItem + 2) % 3; }
+		if (event.key.code == sf::Keyboard::Down) { m_selectedGameOverItem = (m_selectedGameOverItem + 1) % 3; }
+		if (event.key.code == sf::Keyboard::Return) {
+			if (m_selectedGameOverItem == 0) { reset(); m_currentState = GameState::PLAYING; }
+			if (m_selectedGameOverItem == 1) { m_currentState = GameState::MAIN_MENU; }
+			if (m_selectedGameOverItem == 2) { m_window.close(); }
+		}
+	}
+	// --- Mouse click support for game over menu ---
+	if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+		auto mousePos = m_window.mapPixelToCoords({ event.mouseButton.x, event.mouseButton.y });
+		if (m_gameOverRestart.getGlobalBounds().contains(mousePos)) { reset(); m_currentState = GameState::PLAYING; }
+		if (m_gameOverMainMenu.getGlobalBounds().contains(mousePos)) { m_currentState = GameState::MAIN_MENU; }
+		if (m_gameOverExit.getGlobalBounds().contains(mousePos)) { m_window.close(); }
+	}
+}
+
+// --- UPDATE LOGIC ---
+void Game::updateMainMenu() {
+	m_menuPlay.setFillColor(sf::Color::White); m_menuInstructions.setFillColor(sf::Color::White); m_menuExit.setFillColor(sf::Color::White);
+	if (m_selectedMenuItem == 0) m_menuPlay.setFillColor(sf::Color::Red);
+	if (m_selectedMenuItem == 1) m_menuInstructions.setFillColor(sf::Color::Red);
+	if (m_selectedMenuItem == 2) m_menuExit.setFillColor(sf::Color::Red);
+}
+void Game::updateGame(sf::Time deltaTime) {
+	// Car movement logic (edge-triggered)
+	static bool leftPressedLast = false;
+	static bool rightPressedLast = false;
+	bool leftPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Left);
+	bool rightPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Right);
+	if (leftPressed && !leftPressedLast) m_player.move(-1);
+	if (rightPressed && !rightPressedLast) m_player.move(1);
+	leftPressedLast = leftPressed;
+	rightPressedLast = rightPressed;
+
+	m_player.handleInput(); // for rotation only
+	m_player.update();
+
+	// --- Dynamic obstacle spawn frequency and road/rock speed ---
+	float minSpawnInterval = 0.7f; // Increased minimum interval for more space between rocks
+	float maxSpawnInterval = 1.5f;
+	float spawnInterval = std::max(minSpawnInterval, maxSpawnInterval - m_score * 0.0015f);
+	float baseSpeed = 200.0f;
+	float maxSpeed = 600.0f;
+	float travelSpeed = std::min(baseSpeed + m_score * 0.7f, maxSpeed);
+
+	// Use the new spawn interval
+	if (m_spawnClock.getElapsedTime().asSeconds() > spawnInterval) {
+		auto rock = std::make_unique<Rock>(rand() % 3);
+		rock->setSpeed(travelSpeed * deltaTime.asSeconds()); // Set rock speed to match road
+		m_obstacles.push_back(std::move(rock));
+		m_spawnClock.restart();
+	}
+
+	// Move road at dynamic speed
+	m_roadSprite1.move(0, travelSpeed * deltaTime.asSeconds());
+	m_roadSprite2.move(0, travelSpeed * deltaTime.asSeconds());
+	if (m_roadSprite1.getPosition().y > 900.f) { m_roadSprite1.setPosition(0, -900.f); }
+	if (m_roadSprite2.getPosition().y > 900.f) { m_roadSprite2.setPosition(0, -900.f); }
+
+	m_score++;
+	m_scoreText.setString("Score: " + std::to_string(m_score));
+	for (auto& obstacle : m_obstacles) {
+		obstacle->setSpeed(travelSpeed * deltaTime.asSeconds()); // Keep all rocks at same speed as road
 		obstacle->update();
-		// Only check collision if lanes match
-		if (obstacle->getLane() == player.lane) {
-			sf::FloatRect playerBounds = player.getBounds();
+		// Only collide if lanes match, but use a more reasonable margin
+		if (obstacle->getLane() == m_player.lane) {
+			sf::FloatRect playerBounds = m_player.getBounds();
 			sf::FloatRect obstacleBounds = obstacle->getBounds();
-			float margin = 20.f;
+			float margin = 10.f; // Small margin for more accurate collision
 			playerBounds.left += margin;
 			playerBounds.top += margin;
 			playerBounds.width -= 2 * margin;
@@ -99,62 +211,53 @@ void Game::update() {
 			obstacleBounds.width -= 2 * margin;
 			obstacleBounds.height -= 2 * margin;
 			if (playerBounds.intersects(obstacleBounds)) {
-				if (!isGameOver) {
-					m_backgroundMusic.stop();
-					m_crashSound.play();
-				}
-				isGameOver = true;
-				isShaking = true;
-				shakeClock.restart();
+				m_backgroundMusic.stop(); m_crashSound.play(); saveHighScore();
+				m_currentState = GameState::GAME_OVER;
 			}
 		}
 	}
-	if (isShaking) {
-		if (shakeClock.getElapsedTime().asSeconds() < 0.2f) {
-			sf::View view = window.getView();
-			float offsetX = (rand() % 10) - 5;
-			float offsetY = (rand() % 10) - 5;
-			view.move(offsetX, offsetY);
-			window.setView(view);
-		}
-		else {
-			isShaking = false;
-			window.setView(window.getDefaultView());
-		}
-	}
-
-	score++;
-	scoreText.setString("Score: " + std::to_string(score));
+	m_obstacles.erase(std::remove_if(m_obstacles.begin(), m_obstacles.end(), [](const auto& o) { return o->getTop() > 900.f; }), m_obstacles.end());
+}
+void Game::updateGameOverMenu() {
+	m_gameOverRestart.setFillColor(sf::Color::White); m_gameOverMainMenu.setFillColor(sf::Color::White); m_gameOverExit.setFillColor(sf::Color::White);
+	if (m_selectedGameOverItem == 0) m_gameOverRestart.setFillColor(sf::Color::Red);
+	if (m_selectedGameOverItem == 1) m_gameOverMainMenu.setFillColor(sf::Color::Red);
+	if (m_selectedGameOverItem == 2) m_gameOverExit.setFillColor(sf::Color::Red);
 }
 
-void Game::render() {
-	window.clear(sf::Color(50, 50, 50));
-	window.draw(m_roadSprite1);
-	window.draw(m_roadSprite2);
-	for (auto& obstacle : obstacles) {
-		obstacle->draw(window);
-	}
-	player.draw(window);
-	window.draw(scoreText);
-	if (isGameOver) {
-		window.draw(gameOverText);
-	}
-	window.display();
+// --- RENDER LOGIC ---
+void Game::renderMainMenu() { m_window.draw(m_menuBackgroundSprite); m_window.draw(m_menuTitle); m_window.draw(m_menuPlay); m_window.draw(m_menuInstructions); m_window.draw(m_menuExit); }
+void Game::renderInstructions() { m_window.draw(m_menuBackgroundSprite); m_window.draw(m_instructionsText); }
+void Game::renderGame() {
+	m_window.draw(m_roadSprite1); m_window.draw(m_roadSprite2); m_player.draw(m_window);
+	for (const auto& obstacle : m_obstacles) { obstacle->draw(m_window); }
+	m_window.draw(m_scoreText);
+}
+void Game::renderGameOver() {
+	renderGame(); // Draw the final game state in the background
+	m_highScoreText.setString("Score: " + std::to_string(m_score) + "\nHigh Score: " + std::to_string(m_highScore));
+	centerText(m_highScoreText, 400, 320);
+	m_window.draw(m_gameOverTitle); m_window.draw(m_highScoreText); m_window.draw(m_gameOverRestart); m_window.draw(m_gameOverMainMenu); m_window.draw(m_gameOverExit);
 }
 
-void Game::spawnObstacle() {
-	if (spawnClock.getElapsedTime().asSeconds() > 1.5f) {
-		int randomLane = rand() % 3;
-		obstacles.push_back(std::make_unique<Rock>(randomLane));
-		spawnClock.restart();
-	}
-}
-
+// --- GAME UTILITY FUNCTIONS ---
 void Game::reset() {
-	isGameOver = false;
-	score = 0;
-	obstacles.clear();
-	player = Player();
-	m_backgroundMusic.play();
-	// Optionally reset player position, score, etc.
+	m_score = 0; m_obstacles.clear(); m_player.reset(); m_spawnClock.restart(); m_backgroundMusic.play();
+}
+void Game::spawnObstacle() {
+	if (m_spawnClock.getElapsedTime().asSeconds() > 1.2f) {
+		m_obstacles.push_back(std::make_unique<Rock>(rand() % 3)); // FIX: Only pass lane
+		m_spawnClock.restart();
+	}
+}
+void Game::updateRoad(sf::Time deltaTime) {
+	float roadSpeed = 200.0f; m_roadSprite1.move(0, roadSpeed * deltaTime.asSeconds()); m_roadSprite2.move(0, roadSpeed * deltaTime.asSeconds());
+	if (m_roadSprite1.getPosition().y > 900.f) { m_roadSprite1.setPosition(0, -900.f); }
+	if (m_roadSprite2.getPosition().y > 900.f) { m_roadSprite2.setPosition(0, -900.f); } // FIX typo
+}
+void Game::saveHighScore() {
+	if (m_score > m_highScore) { m_highScore = m_score; std::ofstream file("highscore.txt"); if (file.is_open()) file << m_highScore; }
+}
+void Game::loadHighScore() {
+	std::ifstream file("highscore.txt"); if (file.is_open()) file >> m_highScore;
 }

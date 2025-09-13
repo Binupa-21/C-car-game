@@ -1,9 +1,2 @@
-﻿  AssertManager.cpp
-  ConsoleApplication1.cpp
-  game.cpp
-C:\Users\User\OneDrive\Desktop\uni\OOP\ConsoleApplication1\ConsoleApplication1\game.cpp(115,18): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\User\OneDrive\Desktop\uni\OOP\ConsoleApplication1\ConsoleApplication1\game.cpp(116,18): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-  player.cpp
-  rock.cpp
-  Generating Code...
+﻿  rock.cpp
   ConsoleApplication1.vcxproj -> C:\Users\User\OneDrive\Desktop\uni\OOP\ConsoleApplication1\x64\Debug\ConsoleApplication1.exe

@@ -8,7 +8,7 @@ Rock::Rock(int laneIndex) {
     shape.setPosition(225.f + (lane * 150.f), -100.f); // Restore original lane positions
     speed = 4.0f;
     // Set up sprite
-    sprite.setTexture(AssetManager::GetTexture("C:/Users/User/Desktop/oop_new/oop new/Rock.png"));
+    sprite.setTexture(AssetManager::GetTexture("Assets/Rock.png"));
     sprite.setPosition(shape.getPosition());
     sprite.setScale(120.f / sprite.getLocalBounds().width, 120.f / sprite.getLocalBounds().height);
 }
