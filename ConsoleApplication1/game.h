@@ -30,6 +30,13 @@ class Game {
   sf::Sound m_crashSound;  // <--  The object that plays the sound
   sf::Music m_backgroundMusic;  // <--  The object for background music
 
+  sf::Font font;
+  sf::Text scoreText;
+  sf::Text gameOverText;
+  int score = 0;
+
+ 
+
  public:
   Game();
   void run();

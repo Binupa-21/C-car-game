@@ -10,16 +10,31 @@
 Game::Game() : window(sf::VideoMode(800, 900), "SFML Car Game") {
     window.setFramerateLimit(60);
     srand(static_cast<unsigned>(time(0)));
-    m_roadSprite1.setTexture(AssetManager::GetTexture("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Road.png"));
-    m_roadSprite2.setTexture(AssetManager::GetTexture("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Road.png"));
+    // FIX: Use Road texture for road sprite
+    m_roadSprite1.setTexture(AssetManager::GetTexture("C:/Users/User/Desktop/oop_new/oop new/Road.png"));
+    m_roadSprite2.setTexture(AssetManager::GetTexture("C:/Users/User/Desktop/oop_new/oop new/Road.png"));
     m_roadSprite1.setPosition(0, 0);
     m_roadSprite2.setPosition(0, -900.f);
-    m_crashSound.setBuffer(AssetManager::GetSoundBuffer("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Audio/crash.wav"));
-    if (m_backgroundMusic.openFromFile("C:/Users/User/OneDrive/Desktop/uni/OOP/ConsoleApplication1/Audio/bgmusic.ogg")) {
+    m_crashSound.setBuffer(AssetManager::GetSoundBuffer("C:/Users/User/Desktop/oop_new/oop new/Audio/crash.wav"));
+    if (m_backgroundMusic.openFromFile("C:/Users/User/Desktop/oop_new/oop new/Audio/bgmusic.ogg")) {
         m_backgroundMusic.setVolume(40.f);
         m_backgroundMusic.setLoop(true);
         m_backgroundMusic.play();
     }
+
+    if (!font.loadFromFile("arial.ttf")) {
+        // Handle error 
+    }
+    scoreText.setFont(font);
+    scoreText.setCharacterSize(24);
+    scoreText.setFillColor(sf::Color::White);
+    scoreText.setPosition(10, 10);
+
+    gameOverText.setFont(font);
+    gameOverText.setCharacterSize(70);
+    gameOverText.setFillColor(sf::Color::Red);
+    gameOverText.setString("GAME OVER");
+    gameOverText.setPosition(200, 400);
 }
 
 void Game::run() {
@@ -46,6 +61,11 @@ void Game::handleInput() {
         }
     }
     player.handleInput();
+
+    if(isGameOver && event.type == sf::Event::KeyPressed && event.key.code
+        == sf::Keyboard::R) {
+        reset();
+    }
 }
 
 void Game::update() {
@@ -100,6 +120,9 @@ void Game::update() {
             window.setView(window.getDefaultView());
         }
     }
+
+    score++;
+    scoreText.setString("Score: " + std::to_string(score));
 }
 
 void Game::render() {
@@ -110,6 +133,10 @@ void Game::render() {
         obstacle->draw(window);
     }
     player.draw(window);
+    window.draw(scoreText);
+    if (isGameOver) {
+        window.draw(gameOverText);
+    }
     window.display();
 }
 
@@ -123,7 +150,10 @@ void Game::spawnObstacle() {
 
 void Game::reset() {
     isGameOver = false;
+    score = 0;
     obstacles.clear();
+    player = Player();
     m_backgroundMusic.play();
     // Optionally reset player position, score, etc.
 }
+
