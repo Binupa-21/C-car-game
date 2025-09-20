@@ -1,6 +1,7 @@
 #undef Game
 #include "game.h"
 #include "Rock.h"
+#include "cone.h" 
 #include "AssetManager.h"
 #include <ctime>
 #include <iostream>
@@ -30,6 +31,9 @@ Game::Game() : m_window(sf::VideoMode(800, 900), "SFML Car Game") {
 	m_menuInstructions.setOutlineColor(sf::Color::Black); m_menuInstructions.setOutlineThickness(2.f);
 	m_menuExit.setFont(m_font); m_menuExit.setString("Exit"); m_menuExit.setCharacterSize(40); centerText(m_menuExit, 400, 550);
 	m_menuExit.setOutlineColor(sf::Color::Black); m_menuExit.setOutlineThickness(2.f);
+	// Add difficulty option
+	m_menuDifficulty.setFont(m_font); m_menuDifficulty.setString("Difficulty: Medium"); m_menuDifficulty.setCharacterSize(32); centerText(m_menuDifficulty, 400, 650);
+	m_menuDifficulty.setOutlineColor(sf::Color::Black); m_menuDifficulty.setOutlineThickness(2.f);
 
 	// --- Configure Instructions Screen ---
 	m_instructionsText.setFont(m_font);
@@ -38,7 +42,16 @@ Game::Game() : m_window(sf::VideoMode(800, 900), "SFML Car Game") {
 		<< "Use the LEFT and RIGHT arrow keys to change lanes.\n\n"
 		<< "Dodge the falling rocks for as long as you can!\n\n\n\n"
 		<< "Press any key to return to the menu.";
-	m_instructionsText.setString(ss.str()); m_instructionsText.setCharacterSize(30); m_instructionsText.setFillColor(sf::Color::White); centerText(m_instructionsText, 400, 450);
+
+	// Make instructions text size responsive to window height so it doesn't appear
+	// too small/zoomed-out on different resolutions. Also increase line spacing
+	// for better readability and position the block slightly higher.
+	unsigned int instrSize = static_cast<unsigned int>(m_window.getSize().y * 0.03f); // ~3% of window height
+	m_instructionsText.setString(ss.str());
+	m_instructionsText.setCharacterSize(instrSize);
+	m_instructionsText.setLineSpacing(1.15f);
+	m_instructionsText.setFillColor(sf::Color::White);
+	centerText(m_instructionsText, static_cast<float>(m_window.getSize().x) / 2.0f, static_cast<float>(m_window.getSize().y) * 0.4f);
 
 	// --- Configure Game Over Menu ---
 	m_gameOverTitle.setFont(m_font); m_gameOverTitle.setString("GAME OVER"); m_gameOverTitle.setCharacterSize(80); m_gameOverTitle.setFillColor(sf::Color::Red); centerText(m_gameOverTitle, 400, 200);
@@ -111,20 +124,23 @@ void Game::render() {
 // --- EVENT PROCESSING FOR MENUS ---
 void Game::processMenuEvents(sf::Event& event) {
 	if (event.type == sf::Event::KeyPressed) {
-		if (event.key.code == sf::Keyboard::Up) { m_selectedMenuItem = (m_selectedMenuItem + 2) % 3; }
-		if (event.key.code == sf::Keyboard::Down) { m_selectedMenuItem = (m_selectedMenuItem + 1) % 3; }
+		if (event.key.code == sf::Keyboard::Up) { m_selectedMenuItem = (m_selectedMenuItem + 3) % 4; }
+		if (event.key.code == sf::Keyboard::Down) { m_selectedMenuItem = (m_selectedMenuItem + 1) % 4; }
+		if (event.key.code == sf::Keyboard::Left && m_selectedMenuItem == 3) { m_difficulty = (m_difficulty + 2) % 3; }
+		if (event.key.code == sf::Keyboard::Right && m_selectedMenuItem == 3) { m_difficulty = (m_difficulty + 1) % 3; }
 		if (event.key.code == sf::Keyboard::Return) {
 			if (m_selectedMenuItem == 0) { reset(); m_currentState = GameState::PLAYING; }
 			if (m_selectedMenuItem == 1) { m_currentState = GameState::INSTRUCTIONS; }
 			if (m_selectedMenuItem == 2) { m_window.close(); }
 		}
 	}
-	// --- Mouse click support for menu ---
+	// Mouse click support for menu
 	if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
 		auto mousePos = m_window.mapPixelToCoords({ event.mouseButton.x, event.mouseButton.y });
 		if (m_menuPlay.getGlobalBounds().contains(mousePos)) { reset(); m_currentState = GameState::PLAYING; }
 		if (m_menuInstructions.getGlobalBounds().contains(mousePos)) { m_currentState = GameState::INSTRUCTIONS; }
 		if (m_menuExit.getGlobalBounds().contains(mousePos)) { m_window.close(); }
+		if (m_menuDifficulty.getGlobalBounds().contains(mousePos)) { m_difficulty = (m_difficulty + 1) % 3; }
 	}
 }
 void Game::processInstructionsEvents(sf::Event& event) {
@@ -151,10 +167,15 @@ void Game::processGameOverEvents(sf::Event& event) {
 
 // --- UPDATE LOGIC ---
 void Game::updateMainMenu() {
-	m_menuPlay.setFillColor(sf::Color::White); m_menuInstructions.setFillColor(sf::Color::White); m_menuExit.setFillColor(sf::Color::White);
+	m_menuPlay.setFillColor(sf::Color::White); m_menuInstructions.setFillColor(sf::Color::White); m_menuExit.setFillColor(sf::Color::White); m_menuDifficulty.setFillColor(sf::Color::White);
 	if (m_selectedMenuItem == 0) m_menuPlay.setFillColor(sf::Color::Red);
 	if (m_selectedMenuItem == 1) m_menuInstructions.setFillColor(sf::Color::Red);
 	if (m_selectedMenuItem == 2) m_menuExit.setFillColor(sf::Color::Red);
+	if (m_selectedMenuItem == 3) m_menuDifficulty.setFillColor(sf::Color::Red);
+	// Update difficulty text
+	const char* diffStr[] = {"Easy", "Medium", "Hard"};
+	m_menuDifficulty.setString(std::string("Difficulty: ") + diffStr[m_difficulty]);
+	centerText(m_menuDifficulty, 400, 650);
 }
 void Game::updateGame(sf::Time deltaTime) {
 	// Car movement logic (edge-triggered)
@@ -171,18 +192,27 @@ void Game::updateGame(sf::Time deltaTime) {
 	m_player.update();
 
 	// --- Dynamic obstacle spawn frequency and road/rock speed ---
-	float minSpawnInterval = 0.7f; // Increased minimum interval for more space between rocks
-	float maxSpawnInterval = 1.5f;
+	float minSpawnInterval, maxSpawnInterval, baseSpeed, maxSpeed;
+	if (m_difficulty == 0) { // Easy
+		minSpawnInterval = 1.0f; maxSpawnInterval = 2.0f; baseSpeed = 150.0f; maxSpeed = 350.0f;
+	} else if (m_difficulty == 1) { // Medium
+		minSpawnInterval = 0.7f; maxSpawnInterval = 1.5f; baseSpeed = 200.0f; maxSpeed = 600.0f;
+	} else { // Hard
+		minSpawnInterval = 0.4f; maxSpawnInterval = 1.0f; baseSpeed = 300.0f; maxSpeed = 900.0f;
+	}
 	float spawnInterval = std::max(minSpawnInterval, maxSpawnInterval - m_score * 0.0015f);
-	float baseSpeed = 200.0f;
-	float maxSpeed = 600.0f;
 	float travelSpeed = std::min(baseSpeed + m_score * 0.7f, maxSpeed);
-
+					
 	// Use the new spawn interval
 	if (m_spawnClock.getElapsedTime().asSeconds() > spawnInterval) {
-		auto rock = std::make_unique<Rock>(rand() % 3);
-		rock->setSpeed(travelSpeed * deltaTime.asSeconds()); // Set rock speed to match road
-		m_obstacles.push_back(std::move(rock));
+		if (rand() % 2 == 0) {
+			m_obstacles.push_back(std::make_unique<Rock>(rand() % 3));
+			std::cout << "Spawned Rock\n";
+		} else {
+			m_obstacles.push_back(std::make_unique<Cone>(rand() % 3));
+			std::cout << "Spawned Cone\n";
+		}
+
 		m_spawnClock.restart();
 	}
 
@@ -226,7 +256,7 @@ void Game::updateGameOverMenu() {
 }
 
 // --- RENDER LOGIC ---
-void Game::renderMainMenu() { m_window.draw(m_menuBackgroundSprite); m_window.draw(m_menuTitle); m_window.draw(m_menuPlay); m_window.draw(m_menuInstructions); m_window.draw(m_menuExit); }
+void Game::renderMainMenu() { m_window.draw(m_menuBackgroundSprite); m_window.draw(m_menuTitle); m_window.draw(m_menuPlay); m_window.draw(m_menuInstructions); m_window.draw(m_menuExit); m_window.draw(m_menuDifficulty); }
 void Game::renderInstructions() { m_window.draw(m_menuBackgroundSprite); m_window.draw(m_instructionsText); }
 void Game::renderGame() {
 	m_window.draw(m_roadSprite1); m_window.draw(m_roadSprite2); m_player.draw(m_window);
