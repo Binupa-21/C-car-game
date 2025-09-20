@@ -43,15 +43,15 @@ Game::Game() : m_window(sf::VideoMode(800, 900), "SFML Car Game") {
 		<< "Dodge the falling rocks for as long as you can!\n\n\n\n"
 		<< "Press any key to return to the menu.";
 
-	// Make instructions text size responsive to window height so it doesn't appear
-	// too small/zoomed-out on different resolutions. Also increase line spacing
-	// for better readability and position the block slightly higher.
+	// Responsive size, wrapping and spacing for instructions
 	unsigned int instrSize = static_cast<unsigned int>(m_window.getSize().y * 0.03f); // ~3% of window height
-	m_instructionsText.setString(ss.str());
+	float maxWidth = m_window.getSize().x * 0.8f; // wrap to 80% of window width
+	std::string wrapped = wrapText(ss.str(), m_font, instrSize, maxWidth);
+	m_instructionsText.setString(wrapped);
 	m_instructionsText.setCharacterSize(instrSize);
-	m_instructionsText.setLineSpacing(1.15f);
+	m_instructionsText.setLineSpacing(1.2f);
 	m_instructionsText.setFillColor(sf::Color::White);
-	centerText(m_instructionsText, static_cast<float>(m_window.getSize().x) / 2.0f, static_cast<float>(m_window.getSize().y) * 0.4f);
+	centerText(m_instructionsText, static_cast<float>(m_window.getSize().x) / 2.0f, static_cast<float>(m_window.getSize().y) * 0.35f);
 
 	// --- Configure Game Over Menu ---
 	m_gameOverTitle.setFont(m_font); m_gameOverTitle.setString("GAME OVER"); m_gameOverTitle.setCharacterSize(80); m_gameOverTitle.setFillColor(sf::Color::Red); centerText(m_gameOverTitle, 400, 200);
@@ -290,4 +290,32 @@ void Game::saveHighScore() {
 }
 void Game::loadHighScore() {
 	std::ifstream file("highscore.txt"); if (file.is_open()) file >> m_highScore;
+}
+
+// Simple word-wrapping helper: breaks input into lines that fit within maxWidth
+// using the provided font and character size. This is a basic implementation
+// and not pixel-perfect but effective for menu/instruction text.
+std::string wrapText(const std::string& input, const sf::Font& font, unsigned int charSize, float maxWidth) {
+	std::istringstream words(input);
+	std::string word;
+	std::string line;
+	std::string output;
+	while (words >> word) {
+		std::string test = line.empty() ? word : line + " " + word;
+		sf::Text tmp(test, font, charSize);
+		if (tmp.getLocalBounds().width > maxWidth) {
+			if (!line.empty()) {
+				output += line + "\n";
+				line = word;
+			} else {
+				// single long word — force it onto its own line
+				output += test + "\n";
+				line.clear();
+			}
+		} else {
+			line = test;
+		}
+	}
+	if (!line.empty()) output += line;
+	return output;
 }
