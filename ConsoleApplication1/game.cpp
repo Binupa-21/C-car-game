@@ -9,6 +9,9 @@
 #include <sstream>
 #include <algorithm>
 
+// Forward-declare helper so it can be used in Game constructor
+std::string wrapText(const std::string& input, const sf::Font& font, unsigned int charSize, float maxWidth);
+
 Game::Game() : m_window(sf::VideoMode(800, 900), "SFML Car Game") {
 	m_window.setFramerateLimit(60);
 	srand(static_cast<unsigned int>(time(0)));
