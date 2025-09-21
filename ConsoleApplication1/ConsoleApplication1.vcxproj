@@ -132,6 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AssertManager.cpp" />
+    <ClCompile Include="cones.cpp" />
     <ClCompile Include="ConsoleApplication1.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="player.cpp" />
@@ -139,6 +140,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetManager.h" />
+    <ClInclude Include="cone.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="obstacle.h" />
     <ClInclude Include="player.h" />

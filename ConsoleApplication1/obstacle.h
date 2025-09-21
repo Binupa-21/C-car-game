@@ -10,7 +10,6 @@ protected:
     int lane = 1; // Lane index for obstacle
 
 public:
-    // Virtual destructor is important for base classes!
     virtual ~Obstacle() = default;
 
     // Pure virtual functions make this class abstract

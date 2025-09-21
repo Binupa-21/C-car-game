@@ -61,7 +61,9 @@ private:
 	sf::Text m_menuPlay;
 	sf::Text m_menuInstructions;
 	sf::Text m_menuExit;
+	sf::Text m_menuDifficulty; 
 	int m_selectedMenuItem = 0;
+	int m_difficulty = 1; // 0: Easy, 1: Medium, 2: Hard
 
 	// --- Instructions Assets ---
 	sf::Text m_instructionsText;
